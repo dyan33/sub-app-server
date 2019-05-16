@@ -2,7 +2,6 @@ package server
 
 import (
 	"SubAppServer/task"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/tidwall/gjson"
@@ -76,7 +75,7 @@ func WebServer(port string) {
 	log.Println("WebServer running on", port)
 
 	if err := r.Run(port); err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 }

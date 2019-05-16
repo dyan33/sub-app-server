@@ -4,6 +4,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"os"
 )
 
 var Cfg *Config
@@ -17,6 +18,8 @@ type Config struct {
 }
 
 func init() {
+
+	log.SetOutput(os.Stdout)
 
 	Cfg = &Config{}
 
