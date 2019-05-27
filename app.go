@@ -7,12 +7,26 @@ import (
 	"fmt"
 )
 
+func run(server func(string), ports []int) bool {
+
+	b := false
+
+	for _, port := range ports {
+		go server(fmt.Sprintf(":%d", port))
+		b = true
+	}
+	return b
+
+}
+
 func main() {
 
-	for i := 0; i < config.Cfg.ProxyNum; i++ {
-		go proxy.OrangeProxy(fmt.Sprintf(":%d", config.Cfg.ProxyPort+i))
-	}
+	//代理
+	run(proxy.TaskProxy, config.Cfg.Proxy)
 
-	server.WebServer(fmt.Sprintf(":%d", config.Cfg.WebPort))
+	//web
+	run(server.WebServer, config.Cfg.Server)
+
+	<-make(chan struct{})
 
 }

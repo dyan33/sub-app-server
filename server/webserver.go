@@ -1,10 +1,8 @@
 package server
 
 import (
-	"SubAppServer/task"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/tidwall/gjson"
 	"log"
 	"net/http"
 	"time"
@@ -29,38 +27,7 @@ func wsHandler(c *gin.Context) {
 		return
 	}
 
-	for {
-		msgType, msgData, err := conn.ReadMessage()
-
-		if err != nil {
-			log.Println("cant read message:", err)
-
-			switch err.(type) {
-			case *websocket.CloseError:
-				return
-			default:
-				continue
-			}
-		}
-
-		if msgType == websocket.TextMessage {
-
-			text := string(msgData)
-
-			location := gjson.Get(text, "location").String()
-			html := gjson.Get(text, "html").String()
-			vid := gjson.Get(text, "vid").String()
-
-			task.TasksChan <- task.Task{
-				Url:  location,
-				Html: html,
-				Conn: conn,
-			}
-
-			log.Println("接收任务", vid, location)
-		}
-
-	}
+	SocketChan <- conn
 
 }
 
@@ -70,9 +37,16 @@ func WebServer(port string) {
 
 	r := gin.Default()
 
+	r.LoadHTMLGlob("templates/*")
+
 	r.GET("/ws", wsHandler)
 
-	log.Println("WebServer running on", port)
+	r.GET("/", func(c *gin.Context) {
+
+		c.HTML(200, "index.html", nil)
+	})
+
+	log.Println("start WebServer", port)
 
 	if err := r.Run(port); err != nil {
 		log.Println(err)

@@ -21,7 +21,7 @@ func SimtestProxy(port string) {
 	username, password := "mauritius", "Ux5vW5qw"
 
 	middleProxy := goproxy.NewProxyHttpServer()
-	middleProxy.Verbose = false
+	middleProxy.Verbose = true
 
 	middleProxy.Tr.Proxy = func(req *http.Request) (*url.URL, error) {
 		SetBasicAuth(username, password, req)
