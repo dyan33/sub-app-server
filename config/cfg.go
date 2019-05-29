@@ -11,6 +11,13 @@ import (
 
 var Cfg *Config
 
+type AppInfo struct {
+	Operator string `json:"operator"`
+	Deviceid string `json:"deviceid"`
+	TimeZone string `json:"timezone"`
+	Lang     string `json:"lang"`
+}
+
 type Script struct {
 	Exe  string `yaml:"exe"`
 	Dir  string `yaml:"dir"`

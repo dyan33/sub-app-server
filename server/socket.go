@@ -5,6 +5,7 @@ import (
 	"SubAppServer/scripts"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/tidwall/gjson"
 	"gopkg.in/elazarl/goproxy.v1"
@@ -30,12 +31,6 @@ var SocketChan chan *websocket.Conn
 
 func init() {
 	SocketChan = make(chan *websocket.Conn, 4)
-}
-
-type AppInfo struct {
-	Operator string `json:"operator"`
-	Deviceid string `json:"deviceid"`
-	TimeZone string `json:"timezone"`
 }
 
 type HttpRequest struct {
@@ -76,6 +71,11 @@ func makeRequest(id int, req *http.Request) *HttpRequest {
 	}
 
 	for key, value := range req.Header {
+
+		if key == "Proxy-Connection" {
+			continue
+		}
+
 		request.Header[key] = value[0]
 	}
 
@@ -202,17 +202,15 @@ func (w *SocketClient) doResponse(data []byte) {
 //执行脚本
 func (w *SocketClient) runScript(data []byte) {
 
-	app := AppInfo{}
+	app := config.AppInfo{}
 	if err := json.Unmarshal(data, &app); err != nil {
 		log.Println("解析Json错误:", err)
 		return
 	}
 
-	script := config.Cfg.Get(app.Operator)
+	proxy := fmt.Sprintf("127.0.0.1%s", w.port)
 
-	proxy := "127.0.0.1" + w.port
-
-	info, err := scripts.NewBrowerScript(script, proxy).Run()
+	info, err := scripts.NewBrowerScript(app, proxy).Run()
 
 	log.Println("脚本完成!", info, err)
 
