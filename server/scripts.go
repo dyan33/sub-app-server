@@ -1,8 +1,7 @@
-package scripts
+package server
 
 import (
 	"SubAppServer/config"
-	"log"
 	"os/exec"
 )
 
@@ -21,7 +20,7 @@ func NewBrowerScript(app config.AppInfo, proxy string) *BrowerScript {
 
 func (s *BrowerScript) Run() (string, error) {
 
-	script := config.Cfg.Get(s.app.Operator)
+	script := config.Cfg.Get(s.app.OperatorCode)
 
 	exe := script.Exe
 	//脚本名字
@@ -37,11 +36,9 @@ func (s *BrowerScript) Run() (string, error) {
 	proxy := s.proxy
 
 	//设备id
-	deviceid := s.app.Deviceid
+	android := s.app.AndroidId
 
-	log.Println("执行脚本", exe, name, lang, timezone, proxy, deviceid)
-
-	command := exec.Command(exe, name, lang, timezone, proxy, deviceid)
+	command := exec.Command(exe, name, lang, timezone, proxy, android)
 	command.Dir = script.Dir
 
 	out, err := command.CombinedOutput()

@@ -12,8 +12,13 @@ import (
 var Cfg *Config
 
 type AppInfo struct {
-	Operator string `json:"operator"`
-	Deviceid string `json:"deviceid"`
+	AndroidId    string `json:"android_id"`
+	Version      string `json:"version"`
+	SdkVersion   string `json:"sdk_version"`
+	DeviceName   string `json:"device_name"`
+	OperatorName string `json:"operator_name"`
+	OperatorCode string `json:"operator_code"`
+
 	TimeZone string `json:"timezone"`
 	Lang     string `json:"lang"`
 }

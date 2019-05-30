@@ -2,7 +2,6 @@ package server
 
 import (
 	"SubAppServer/config"
-	"SubAppServer/scripts"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -97,8 +96,20 @@ func makeResponse(r *http.Request, response HttpResponse) *http.Response {
 
 }
 
+//清空tasks
+func (w *SocketClient) cleanTask() {
+	w.tasks.Range(func(key, value interface{}) bool {
+
+		w.tasks.Delete(key)
+
+		close(value.(chan HttpResponse))
+
+		return true
+	})
+}
+
 //写
-func (w *SocketClient) wirteSocket(stop <-chan struct{}) {
+func (w *SocketClient) wirteSocket(stop <-chan int) {
 
 	ticker := time.NewTicker(pingPeriod)
 
@@ -137,7 +148,7 @@ func (w *SocketClient) wirteSocket(stop <-chan struct{}) {
 }
 
 //读
-func (w *SocketClient) readSocket(stop chan struct{}) {
+func (w *SocketClient) readSocket(stop chan int) {
 
 	defer func() {
 
@@ -166,10 +177,10 @@ func (w *SocketClient) readSocket(stop chan struct{}) {
 		data := []byte(gjson.GetBytes(message, "data").String())
 
 		switch mType {
-		case "info":
+		case "start":
 			go w.runScript(data)
 			break
-		case "response":
+		case "running":
 			w.doResponse(data)
 			break
 		default:
@@ -210,9 +221,11 @@ func (w *SocketClient) runScript(data []byte) {
 
 	proxy := fmt.Sprintf("127.0.0.1%s", w.port)
 
-	info, err := scripts.NewBrowerScript(app, proxy).Run()
+	log.Println(w.name, "开始执行脚本！")
 
-	log.Println("脚本完成!", info, err)
+	info, err := NewBrowerScript(app, proxy).Run()
+
+	log.Println(w.name, "脚本已完成 ===>", info, err)
 
 	_ = w.conn.WriteMessage(websocket.CloseMessage, nil)
 	_ = w.conn.Close()
@@ -224,31 +237,28 @@ func (w *SocketClient) Run() {
 
 		for {
 
-			w.conn = <-SocketChan
+			select {
 
-			log.Println(w.name, "开始任务!")
+			case w.conn = <-SocketChan:
 
-			stopChan := make(chan struct{})
+				log.Println(w.name, "开始任务!")
 
-			go w.wirteSocket(stopChan)
-			go w.readSocket(stopChan)
+				stopChan := make(chan int)
 
-			_ = <-stopChan
+				go w.wirteSocket(stopChan)
+				go w.readSocket(stopChan)
 
-			//清空tasks
-			w.tasks.Range(func(key, value interface{}) bool {
+				_ = <-stopChan
 
-				w.tasks.Delete(key)
+				w.cleanTask()
 
-				close(value.(chan HttpResponse))
+				log.Println(w.name, "结束任务!")
 
-				return true
-			})
-
-			log.Println(w.name, "结束任务!")
+			case _ = <-w.send:
+				w.cleanTask()
+			}
 		}
 	}()
-
 }
 
 //处理请求转发
@@ -258,10 +268,10 @@ func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 
 	defer func() { log.Println(w.name, req.Method, resp.StatusCode, req.URL.String(), time.Now().Sub(start)) }()
 
-	w.send <- makeRequest(id, req)
-
 	rev := make(chan HttpResponse)
 	w.tasks.Store(id, rev)
+
+	w.send <- makeRequest(id, req)
 
 	if response, ok := <-rev; ok {
 
@@ -270,7 +280,7 @@ func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 		return
 	}
 
-	resp = goproxy.NewResponse(req, "text/plain", 500, "Response error")
+	resp = goproxy.NewResponse(req, "text/plain", 555, "close")
 
 	return
 
