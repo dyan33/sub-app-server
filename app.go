@@ -27,6 +27,8 @@ func main() {
 	//web
 	run(server.WebServer, config.Cfg.Server)
 
+	proxy.LocalProxy(":8030")
+
 	<-make(chan struct{})
 
 }

@@ -184,7 +184,7 @@ func (w *SocketClient) readSocket(stop chan int) {
 			w.doResponse(data)
 			break
 		default:
-			log.Println("不能处理数据!", string(message))
+			log.Println(w.name, "不能处理数据!", string(message))
 		}
 
 	}
