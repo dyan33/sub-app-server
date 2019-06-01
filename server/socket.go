@@ -1,7 +1,6 @@
 package server
 
 import (
-	"SubAppServer/config"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -11,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sub-app-server/config"
 	"sync"
 	"time"
 )

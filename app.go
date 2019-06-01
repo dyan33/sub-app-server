@@ -1,10 +1,10 @@
 package main
 
 import (
-	"SubAppServer/config"
-	"SubAppServer/proxy"
-	"SubAppServer/server"
 	"fmt"
+	"sub-app-server/config"
+	"sub-app-server/proxy"
+	"sub-app-server/server"
 )
 
 func run(server func(string), ports []int) bool {

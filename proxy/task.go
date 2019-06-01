@@ -1,12 +1,12 @@
 package proxy
 
 import (
-	"SubAppServer/config"
-	"SubAppServer/server"
 	"gopkg.in/elazarl/goproxy.v1"
 	"log"
 	"net/http"
 	"regexp"
+	"sub-app-server/config"
+	"sub-app-server/server"
 )
 
 func isForward(req *http.Request) bool {

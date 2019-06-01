@@ -1,4 +1,4 @@
-module SubAppServer
+module sub-app-server
 
 require (
 	github.com/gin-gonic/gin v1.4.0

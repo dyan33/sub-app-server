@@ -1,8 +1,8 @@
 package server
 
 import (
-	"SubAppServer/config"
 	"os/exec"
+	"sub-app-server/config"
 )
 
 type BrowerScript struct {
