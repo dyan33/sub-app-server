@@ -119,7 +119,7 @@ func (w *SocketClient) wirteSocket(stop <-chan int) {
 
 		_ = w.conn.Close()
 
-		log.Println(w.name, "关闭写入!")
+		log.Println(w.name, "close write socket!")
 	}()
 
 	for {
@@ -156,7 +156,7 @@ func (w *SocketClient) readSocket(stop chan int) {
 
 		_ = w.conn.Close()
 
-		log.Println(w.name, "关闭读取!")
+		log.Println(w.name, "close read socket!")
 
 	}()
 
@@ -196,7 +196,7 @@ func (w *SocketClient) doResponse(data []byte) {
 	response := HttpResponse{}
 
 	if err := json.Unmarshal(data, &response); err != nil {
-		log.Println("解析Json错误:", err)
+		log.Println("parse json error:", err)
 		return
 	}
 
@@ -215,7 +215,7 @@ func (w *SocketClient) runScript(data []byte) {
 
 	app := config.AppInfo{}
 	if err := json.Unmarshal(data, &app); err != nil {
-		log.Println("解析Json错误:", err)
+		log.Println("parse json error:", err)
 		return
 	}
 
