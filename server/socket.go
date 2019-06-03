@@ -184,7 +184,7 @@ func (w *SocketClient) readSocket(stop chan int) {
 			w.doResponse(data)
 			break
 		default:
-			log.Println(w.name, "不能处理数据!", string(message))
+			log.Println(w.name, "not handle data!", string(message))
 		}
 
 	}
@@ -221,11 +221,11 @@ func (w *SocketClient) runScript(data []byte) {
 
 	proxy := fmt.Sprintf("127.0.0.1%s", w.port)
 
-	log.Println(w.name, "开始执行脚本！")
+	log.Println(w.name, "start call script！")
 
 	info, err := NewBrowerScript(app, proxy).Run()
 
-	log.Println(w.name, "脚本已完成 ===>", info, err)
+	log.Println(w.name, "call script end ===>", info, err)
 
 	_ = w.conn.WriteMessage(websocket.CloseMessage, nil)
 	_ = w.conn.Close()
@@ -241,7 +241,7 @@ func (w *SocketClient) Run() {
 
 			case w.conn = <-SocketChan:
 
-				log.Println(w.name, "开始任务!")
+				log.Println(w.name, "start task!")
 
 				stopChan := make(chan int)
 
@@ -252,7 +252,7 @@ func (w *SocketClient) Run() {
 
 				w.cleanTask()
 
-				log.Println(w.name, "结束任务!")
+				log.Println(w.name, "over task!")
 
 			case _ = <-w.send:
 				w.cleanTask()
@@ -290,7 +290,7 @@ func NewSocketClient(port string) *SocketClient {
 
 	return &SocketClient{
 		port:  port,
-		name:  "[代理" + port + "]",
+		name:  "[proxy" + port + "]",
 		tasks: sync.Map{},
 		send:  make(chan *HttpRequest),
 	}
