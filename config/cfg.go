@@ -18,6 +18,8 @@ type AppInfo struct {
 	DeviceName   string `json:"device_name"`
 	OperatorName string `json:"operator_name"`
 	OperatorCode string `json:"operator_code"`
+	PackageName  string `json:"package_name"`
+	Network      string `json:"network"`
 
 	TimeZone string `json:"timezone"`
 	Lang     string `json:"lang"`
