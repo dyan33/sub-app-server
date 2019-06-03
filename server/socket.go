@@ -41,7 +41,7 @@ type HttpRequest struct {
 }
 
 type HttpResponse struct {
-	Id      int         `json:"id"`
+	Id      int64       `json:"id"`
 	Code    int         `json:"code"`
 	Headers http.Header `json:"headers"`
 	Body    []byte      `json:"body"`
@@ -50,7 +50,7 @@ type HttpResponse struct {
 type SocketClient struct {
 	port  string
 	name  string
-	tasks sync.Map
+	tasks *sync.Map
 
 	send chan *HttpRequest
 
@@ -98,6 +98,9 @@ func makeResponse(r *http.Request, response HttpResponse) *http.Response {
 
 //清空tasks
 func (w *SocketClient) cleanTask() {
+
+	fmt.Println("清空tasks")
+
 	w.tasks.Range(func(key, value interface{}) bool {
 
 		w.tasks.Delete(key)
@@ -126,6 +129,8 @@ func (w *SocketClient) wirteSocket(stop <-chan int) {
 		select {
 
 		case reqeust := <-w.send:
+
+			fmt.Println("send", reqeust.Id)
 
 			_ = w.conn.SetWriteDeadline(time.Now().Add(writeWait))
 
@@ -200,6 +205,8 @@ func (w *SocketClient) doResponse(data []byte) {
 		return
 	}
 
+	fmt.Println("rev", response.Id)
+
 	if recive, ok := w.tasks.Load(response.Id); ok {
 
 		recive.(chan HttpResponse) <- response
@@ -207,7 +214,10 @@ func (w *SocketClient) doResponse(data []byte) {
 		w.tasks.Delete(response.Id)
 
 		close(recive.(chan HttpResponse))
+		return
 	}
+
+	fmt.Println("not found response", response.Id)
 }
 
 //执行脚本
@@ -291,7 +301,7 @@ func NewSocketClient(port string) *SocketClient {
 	return &SocketClient{
 		port:  port,
 		name:  "[proxy" + port + "]",
-		tasks: sync.Map{},
+		tasks: &sync.Map{},
 		send:  make(chan *HttpRequest),
 	}
 }
