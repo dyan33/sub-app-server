@@ -33,7 +33,7 @@ func init() {
 }
 
 type HttpRequest struct {
-	Id     int               `json:"id"`
+	Id     int64             `json:"id"`
 	Method string            `json:"method"`
 	Url    string            `json:"url"`
 	Header map[string]string `json:"header"`
@@ -57,7 +57,7 @@ type SocketClient struct {
 	conn *websocket.Conn
 }
 
-func makeRequest(id int, req *http.Request) *HttpRequest {
+func makeRequest(id int64, req *http.Request) *HttpRequest {
 
 	body, _ := ioutil.ReadAll(req.Body)
 
@@ -264,7 +264,7 @@ func (w *SocketClient) Run() {
 //处理请求转发
 func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 
-	start, id := time.Now(), time.Now().Nanosecond()
+	start, id := time.Now(), time.Now().UnixNano()
 
 	defer func() { log.Println(w.name, req.Method, resp.StatusCode, req.URL.String(), time.Now().Sub(start)) }()
 
