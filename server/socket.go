@@ -58,6 +58,8 @@ type SocketClient struct {
 
 	send chan *HttpRequest
 
+	sms chan string
+
 	conn *websocket.Conn
 }
 
@@ -114,7 +116,7 @@ func (w *SocketClient) makeId() int64 {
 //清空tasks
 func (w *SocketClient) cleanTask() {
 
-	fmt.Println("清空tasks")
+	log.Println(w.name, "clean tasks!")
 
 	w.tasks.Range(func(key, value interface{}) bool {
 
@@ -144,8 +146,6 @@ func (w *SocketClient) wirteSocket(stop <-chan int) {
 		select {
 
 		case reqeust := <-w.send:
-
-			fmt.Println("send", reqeust.Id)
 
 			_ = w.conn.SetWriteDeadline(time.Now().Add(writeWait))
 
@@ -201,8 +201,12 @@ func (w *SocketClient) readSocket(stop chan int) {
 			go w.runScript(data)
 			break
 		case "running":
-			w.doResponse(data)
+			go w.doResponse(data)
 			break
+		case "sms":
+			go func(data []byte) { defer func() { recover() }(); w.sms <- string(data) }(data)
+			break
+
 		default:
 			log.Println(w.name, "not handle data!", string(message))
 		}
@@ -219,8 +223,6 @@ func (w *SocketClient) doResponse(data []byte) {
 		log.Println("parse json error:", err)
 		return
 	}
-
-	fmt.Println("rev", response.Id)
 
 	if recive, ok := w.tasks.Load(response.Id); ok {
 
@@ -266,7 +268,9 @@ func (w *SocketClient) Run() {
 
 			case w.conn = <-SocketChan:
 
+				//初始化
 				w.id = 0
+				w.sms = make(chan string, 1)
 
 				log.Println(w.name, "start task!")
 
@@ -276,6 +280,8 @@ func (w *SocketClient) Run() {
 				go w.readSocket(stopChan)
 
 				_ = <-stopChan
+
+				close(w.sms)
 
 				w.cleanTask()
 
@@ -291,26 +297,45 @@ func (w *SocketClient) Run() {
 //处理请求转发
 func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 
-	start, id := time.Now(), w.makeId()
+	var flag string
 
-	defer func() { log.Println(w.name, req.Method, resp.StatusCode, req.URL.String(), time.Now().Sub(start)) }()
+	start := time.Now()
 
-	rev := make(chan HttpResponse)
-	w.tasks.Store(id, rev)
+	defer func() {
+		log.Println(w.name, req.Method, resp.StatusCode, req.URL.String(), time.Now().Sub(start), flag)
+	}()
 
-	w.send <- makeRequest(id, req)
+	//缓存加载
+	if resp = loadCache(req); resp == nil {
 
-	if response, ok := <-rev; ok {
+		id, rev := w.makeId(), make(chan HttpResponse)
 
-		resp = makeResponse(req, response)
+		w.tasks.Store(id, rev)
 
-		return
+		w.send <- makeRequest(id, req)
+
+		if response, ok := <-rev; ok {
+
+			//缓存响应
+			cacheResponse(req, response)
+
+			resp = makeResponse(req, response)
+
+			return
+		}
+
+		resp = goproxy.NewResponse(req, "text/plain", 555, "close")
+	} else {
+		flag = "cached"
 	}
-
-	resp = goproxy.NewResponse(req, "text/plain", 555, "close")
 
 	return
 
+}
+
+//短信
+func (w *SocketClient) Sms() string {
+	return <-w.sms
 }
 
 func NewSocketClient(port string) *SocketClient {

@@ -43,6 +43,13 @@ func TaskProxy(port string) {
 	//拦截浏览器请求
 	proxy.OnRequest().DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (request *http.Request, response *http.Response) {
 
+		if "sms" == req.Host {
+
+			sms := app.Sms()
+
+			return nil, goproxy.NewResponse(req, "text/plain", 200, sms)
+		}
+
 		if isForward(req) {
 			return nil, app.Process(req)
 		}
