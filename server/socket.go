@@ -48,9 +48,13 @@ type HttpResponse struct {
 }
 
 type SocketClient struct {
-	port  string
-	name  string
+	port string
+	name string
+
+	id int64
+
 	tasks *sync.Map
+	mutex *sync.Mutex
 
 	send chan *HttpRequest
 
@@ -93,6 +97,17 @@ func makeResponse(r *http.Request, response HttpResponse) *http.Response {
 		ContentLength:    int64(buf.Len()),
 		Body:             ioutil.NopCloser(buf),
 	}
+
+}
+
+//获取ID
+func (w *SocketClient) makeId() int64 {
+	w.mutex.Lock()
+	defer func() { w.mutex.Unlock() }()
+
+	w.id = w.id + 1
+
+	return w.id
 
 }
 
@@ -251,6 +266,8 @@ func (w *SocketClient) Run() {
 
 			case w.conn = <-SocketChan:
 
+				w.id = 0
+
 				log.Println(w.name, "start task!")
 
 				stopChan := make(chan int)
@@ -274,7 +291,7 @@ func (w *SocketClient) Run() {
 //处理请求转发
 func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 
-	start, id := time.Now(), time.Now().UnixNano()
+	start, id := time.Now(), w.makeId()
 
 	defer func() { log.Println(w.name, req.Method, resp.StatusCode, req.URL.String(), time.Now().Sub(start)) }()
 
@@ -302,6 +319,7 @@ func NewSocketClient(port string) *SocketClient {
 		port:  port,
 		name:  "[proxy" + port + "]",
 		tasks: &sync.Map{},
+		mutex: &sync.Mutex{},
 		send:  make(chan *HttpRequest),
 	}
 }
