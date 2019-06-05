@@ -194,6 +194,7 @@ func (w *SocketClient) readSocket(stop chan int) {
 
 		default:
 			log.Println(w.name, "not handle data!", string(message))
+			return
 		}
 
 	}
@@ -255,7 +256,7 @@ func (w *SocketClient) Run() {
 
 				//初始化
 				w.id.set(0)
-				w.sms = make(chan string, 1)
+				w.sms = make(chan string, 100) //缓存100条通知
 
 				log.Println(w.name, "start task!")
 
