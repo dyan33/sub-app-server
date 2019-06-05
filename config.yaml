@@ -3,7 +3,7 @@ proxy: [8020,8021,8022,8023,8024]
 
 igonre: ["www.google.es","accounts.google.com","www.gstatic.com","clients1.google.com"]
 
-cache_dir: "./_cache"
+cache_dir: ".cache"
 
 cache:
   types:

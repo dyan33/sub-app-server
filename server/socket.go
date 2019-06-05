@@ -182,10 +182,10 @@ func (w *SocketClient) readSocket(stop chan int) {
 		data := []byte(gjson.GetBytes(message, "data").String())
 
 		switch mType {
-		case "start":
-			go w.runScript(data)
+		case "begin":
+			go w.callScript(data)
 			break
-		case "running":
+		case "network":
 			go w.doResponse(data)
 			break
 		case "sms":
@@ -223,7 +223,7 @@ func (w *SocketClient) doResponse(data []byte) {
 }
 
 //执行脚本
-func (w *SocketClient) runScript(data []byte) {
+func (w *SocketClient) callScript(data []byte) {
 
 	app := AppInfo{}
 	if err := json.Unmarshal(data, &app); err != nil {
@@ -237,7 +237,7 @@ func (w *SocketClient) runScript(data []byte) {
 
 	info, err := NewBrowerScript(app, proxy).Run()
 
-	log.Println(w.name, "call script end ===>", info, err)
+	log.Println(w.name, "call script end!\n", info, "\n", err)
 
 	_ = w.conn.WriteMessage(websocket.CloseMessage, nil)
 	_ = w.conn.Close()
@@ -303,7 +303,7 @@ func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 
 			//缓存响应
 			if cacheResponse(req, response) {
-				flag = "cached"
+				flag = "[cached]"
 			}
 
 			resp = makeResponse(req, response)
@@ -313,7 +313,7 @@ func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 
 		resp = goproxy.NewResponse(req, "text/plain", 555, "close")
 	} else {
-		flag = "load cache"
+		flag = "[load cache]"
 	}
 
 	return
