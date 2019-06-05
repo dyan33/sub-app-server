@@ -45,9 +45,10 @@ func TaskProxy(port string) {
 
 		if "sms" == req.Host {
 
-			sms := app.Sms()
-
-			return nil, goproxy.NewResponse(req, "text/plain", 200, sms)
+			if text, ok := <-app.Sms(); ok {
+				return nil, goproxy.NewResponse(req, "text/plain", 200, text)
+			}
+			return nil, goproxy.NewResponse(req, "text/plain", 555, "")
 		}
 
 		if isForward(req) {

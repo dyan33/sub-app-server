@@ -234,7 +234,7 @@ func (w *SocketClient) callScript(data []byte) {
 
 	proxy := fmt.Sprintf("127.0.0.1%s", w.port)
 
-	log.Println(w.name, "start call script！")
+	log.Println(w.name, "start call script！", app)
 
 	info, err := NewBrowerScript(app, proxy).Run()
 
@@ -322,8 +322,8 @@ func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 }
 
 //短信
-func (w *SocketClient) Sms() string {
-	return <-w.sms
+func (w *SocketClient) Sms() chan string {
+	return w.sms
 }
 
 func NewSocketClient(port string) *SocketClient {
