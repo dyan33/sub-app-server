@@ -1,0 +1,22 @@
+server: [8010]
+proxy: [8020,8021,8022,8023,8024]
+
+igonre: ["www.google.es","accounts.google.com","www.gstatic.com","clients1.google.com"]
+
+cache_dir: "./_cache"
+
+cache:
+  types:
+    - "text/css"
+    - "image/png"
+    - "image/gif"
+    - "mage/gif"
+    - "image/jpeg"
+    - "application/octet-stream"
+    - "application/font-woff"
+  urls:
+    #ais
+    - "http://ss1.mobilelife.co.th/js/jquery.min.js"
+    - "http://ss1.mobilelife.co.th/js/bootstrap.min.js"
+    - "http://ss1.mobilelife.co.th/js/utils.js"
+    - "http://ss1.mobilelife.co.th/js/main.js"

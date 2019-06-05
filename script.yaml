@@ -1,0 +1,19 @@
+scripts:
+
+  #西班牙 orange
+  "21403":
+    exe: "/usr/local/bin/node"
+    dir: "/home/ubuntu/app/sub-app-scripts"
+    name: "orange.js"
+
+  #英国 vodafone
+  "23415":
+    exe: "/usr/local/bin/node"
+    dir: "/Users/dengchenggang/VScodeProjects/sub-app-scripts"
+    name: "uk_vodafone.js"
+
+  #测试
+  "test":
+    exe: "/usr/local/bin/node"
+    dir: "/Users/dengchenggang/VScodeProjects/sub-app-scripts"
+    name: "test.js"

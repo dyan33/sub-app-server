@@ -22,10 +22,10 @@ func run(server func(string), ports []int) bool {
 func main() {
 
 	//代理
-	run(proxy.TaskProxy, config.Cfg.Proxy)
+	run(proxy.TaskProxy, config.C.Proxy)
 
 	//web
-	run(server.WebServer, config.Cfg.Server)
+	run(server.WebServer, config.C.Server)
 
 	proxy.LocalProxy(":8030")
 

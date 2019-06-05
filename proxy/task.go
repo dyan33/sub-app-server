@@ -17,7 +17,7 @@ func isForward(req *http.Request) bool {
 
 		host := req.Host
 
-		for _, h := range config.Cfg.Hosts {
+		for _, h := range config.C.Igonre {
 			if h == host {
 				return false
 			}

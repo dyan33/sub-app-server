@@ -3,33 +3,76 @@ package server
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
+	"path/filepath"
+	"sub-app-server/config"
+	"sync"
 )
 
-const CACHEDIR = "_cache"
+type Cache struct {
+	Url         string `json:"url"`
+	Hash        string `json:"hash"`
+	ContentType string `json:"content_type"`
+	Path        string `json:"path"`
 
-const (
-	STREAM = "application/octet-stream"
-	FONT   = "application/font-woff"
-)
+	body []byte `json:"-"`
+}
 
-var caches []string
+type CacheStore struct {
+	Data  map[string]*Cache `json:"data"`
+	mutex *sync.Mutex
+}
+
+func (c *CacheStore) store(cache *Cache) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.Data[cache.Hash] = cache
+
+	if data, err := json.Marshal(c); err == nil {
+
+		dirname := filepath.Dir(cache.Path)
+
+		if _, err := os.Stat(dirname); os.IsNotExist(err) {
+			_ = os.MkdirAll(dirname, os.ModePerm)
+		}
+
+		//缓存文件
+		_ = ioutil.WriteFile(cache.Path, cache.body, 0666)
+
+		//缓存对象
+		_ = ioutil.WriteFile(config.C.CacheDir+"/cache.json", data, 0666)
+	}
+}
+
+func (c *CacheStore) load(key string) *Cache {
+
+	c.mutex.Lock()
+	defer func() { c.mutex.Unlock() }()
+
+	if ca, ok := c.Data[key]; ok {
+		return ca
+	}
+	return nil
+}
+
+var store CacheStore
 
 func init() {
 
-	caches = []string{
-		"text/css",
-		"image/png",
-		"image/gif",
-		"mage/gif",
-		"image/jpeg",
-		STREAM,
-		FONT,
+	store = CacheStore{
+		Data: map[string]*Cache{},
 	}
+
+	if data, err := ioutil.ReadFile(config.C.CacheDir + "/cache.json"); err == nil {
+		_ = json.Unmarshal(data, &store)
+	}
+
+	store.mutex = &sync.Mutex{}
 }
 
 func hash(text string) string {
@@ -38,34 +81,7 @@ func hash(text string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func saveFile(typ, url string, data []byte) {
-
-	dirname := fmt.Sprintf(`%s/%s`, CACHEDIR, typ)
-
-	if _, err := os.Stat(dirname); os.IsNotExist(err) {
-		_ = os.MkdirAll(dirname, os.ModePerm)
-	}
-
-	filename := fmt.Sprintf("%s/%s", dirname, hash(url))
-
-	if err := ioutil.WriteFile(filename, data, 0666); err != nil {
-		fmt.Println("缓存失败", err)
-	}
-}
-
-func readFile(typ, url string) []byte {
-
-	filename := fmt.Sprintf(`%s/%s/%s`, CACHEDIR, typ, hash(url))
-
-	if _, err := os.Stat(filename); err == nil {
-		if data, err := ioutil.ReadFile(filename); err == nil {
-			return data
-		}
-	}
-	return nil
-}
-
-func cacheResponse(req *http.Request, resp HttpResponse) {
+func cacheResponse(req *http.Request, resp HttpResponse) bool {
 
 	if resp.Body != nil {
 
@@ -77,49 +93,55 @@ func cacheResponse(req *http.Request, resp HttpResponse) {
 			typ = resp.Headers["Content-Type"][0]
 		}
 
-		if len(typ) > 0 {
+		url := req.URL.String()
+		urlHash := hash(url)
 
-			url := req.URL.String()
+		cache := &Cache{
+			Url:         url,
+			Hash:        urlHash,
+			ContentType: typ,
+			Path:        fmt.Sprintf(`%s/%s/%s`, config.C.CacheDir, req.Host, urlHash),
+			body:        resp.Body,
+		}
 
-			if typ == STREAM || typ == FONT {
-				if strings.HasSuffix(url, ".woff") {
-					saveFile(typ, url, resp.Body)
-				}
-			} else {
-				for _, key := range caches {
+		for _, val := range config.C.Cache.Types {
 
-					if key == typ {
-						saveFile(typ, url, resp.Body)
-					}
-				}
+			if val == typ {
+				store.store(cache)
+				return true
 			}
 		}
+
+		for _, val := range config.C.Cache.Urls {
+			if url == val {
+				store.store(cache)
+				return true
+			}
+		}
+
 	}
+
+	return false
 }
 
 func loadCache(req *http.Request) *http.Response {
 
-	var data []byte
-	var typ string
+	key := hash(req.URL.String())
 
-	url := req.URL.String()
+	cache := store.load(key)
 
-	for _, typ = range caches {
-		data = readFile(typ, url)
-		if data != nil {
-			break
+	if cache != nil {
+
+		if data, err := ioutil.ReadFile(cache.Path); err == nil {
+			resp := HttpResponse{
+				Headers: map[string][]string{
+					"Content-Type": {cache.ContentType},
+				},
+				Code: 200,
+				Body: data,
+			}
+			return makeResponse(req, resp)
 		}
-	}
-
-	if data != nil {
-		resp := HttpResponse{
-			Headers: map[string][]string{
-				"Content-Type": {typ},
-			},
-			Code: 200,
-			Body: data,
-		}
-		return makeResponse(req, resp)
 	}
 	return nil
 }

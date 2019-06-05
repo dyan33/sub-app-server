@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"sub-app-server/config"
 	"sync"
 	"time"
 )
@@ -25,12 +24,6 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 )
-
-var SocketChan chan *websocket.Conn
-
-func init() {
-	SocketChan = make(chan *websocket.Conn, 4)
-}
 
 type HttpRequest struct {
 	Id     int64             `json:"id"`
@@ -51,16 +44,19 @@ type SocketClient struct {
 	port string
 	name string
 
-	id int64
-
+	id    *ID
 	tasks *sync.Map
-	mutex *sync.Mutex
 
 	send chan *HttpRequest
-
-	sms chan string
+	sms  chan string
 
 	conn *websocket.Conn
+}
+
+var SocketChan chan *websocket.Conn
+
+func init() {
+	SocketChan = make(chan *websocket.Conn, 4)
 }
 
 func makeRequest(id int64, req *http.Request) *HttpRequest {
@@ -99,17 +95,6 @@ func makeResponse(r *http.Request, response HttpResponse) *http.Response {
 		ContentLength:    int64(buf.Len()),
 		Body:             ioutil.NopCloser(buf),
 	}
-
-}
-
-//获取ID
-func (w *SocketClient) makeId() int64 {
-	w.mutex.Lock()
-	defer func() { w.mutex.Unlock() }()
-
-	w.id = w.id + 1
-
-	return w.id
 
 }
 
@@ -240,7 +225,7 @@ func (w *SocketClient) doResponse(data []byte) {
 //执行脚本
 func (w *SocketClient) runScript(data []byte) {
 
-	app := config.AppInfo{}
+	app := AppInfo{}
 	if err := json.Unmarshal(data, &app); err != nil {
 		log.Println("parse json error:", err)
 		return
@@ -269,7 +254,7 @@ func (w *SocketClient) Run() {
 			case w.conn = <-SocketChan:
 
 				//初始化
-				w.id = 0
+				w.id.set(0)
 				w.sms = make(chan string, 1)
 
 				log.Println(w.name, "start task!")
@@ -308,7 +293,7 @@ func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 	//缓存加载
 	if resp = loadCache(req); resp == nil {
 
-		id, rev := w.makeId(), make(chan HttpResponse)
+		id, rev := w.id.get(), make(chan HttpResponse)
 
 		w.tasks.Store(id, rev)
 
@@ -317,7 +302,9 @@ func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 		if response, ok := <-rev; ok {
 
 			//缓存响应
-			cacheResponse(req, response)
+			if cacheResponse(req, response) {
+				flag = "cached"
+			}
 
 			resp = makeResponse(req, response)
 
@@ -326,7 +313,7 @@ func (w *SocketClient) Process(req *http.Request) (resp *http.Response) {
 
 		resp = goproxy.NewResponse(req, "text/plain", 555, "close")
 	} else {
-		flag = "cached"
+		flag = "load cache"
 	}
 
 	return
@@ -344,7 +331,9 @@ func NewSocketClient(port string) *SocketClient {
 		port:  port,
 		name:  "[proxy" + port + "]",
 		tasks: &sync.Map{},
-		mutex: &sync.Mutex{},
 		send:  make(chan *HttpRequest),
+		id: &ID{
+			mutex: &sync.Mutex{},
+		},
 	}
 }
