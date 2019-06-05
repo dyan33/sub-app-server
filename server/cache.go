@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sub-app-server/config"
 	"sync"
 )
@@ -106,7 +107,7 @@ func cacheResponse(req *http.Request, resp HttpResponse) bool {
 
 		for _, val := range config.C.Cache.Types {
 
-			if val == typ {
+			if strings.HasPrefix(typ, val) {
 				store.store(cache)
 				return true
 			}
