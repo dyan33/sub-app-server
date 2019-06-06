@@ -1,11 +1,18 @@
 server: [8010]
-proxy: [8020,8021,8022,8023,8024]
+proxy: [8020]
 
 igonre: ["www.google.es","accounts.google.com","www.gstatic.com","clients1.google.com"]
 
-cache_dir: ".cache"
-
+#缓存
 cache:
+
+  #缓存目录
+  dir: ".cache"
+
+  #过期时间
+  expire: "12h"
+
+  #缓存MIME
   types:
     - "text/css"
     - "image/png"
@@ -14,6 +21,8 @@ cache:
     - "image/jpeg"
     - "application/octet-stream"
     - "application/font-woff"
+
+  #缓存URL
   urls:
     #ais
     - "http://ss1.mobilelife.co.th/js/jquery.min.js"

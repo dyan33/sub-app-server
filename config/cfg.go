@@ -10,8 +10,10 @@ import (
 var C *Config
 
 type Cache struct {
-	Types []string `json:"types"`
-	Urls  []string `json:"urls"`
+	Dir    string   `json:"dir"`
+	Expire string   `json:"expire"`
+	Types  []string `json:"types"`
+	Urls   []string `json:"urls"`
 }
 
 type Config struct {
@@ -20,8 +22,6 @@ type Config struct {
 	Igonre []string `yaml:"igonre"`
 
 	Cache Cache `yaml:"cache"`
-
-	CacheDir string `yaml:"cache_dir"`
 }
 
 func init() {

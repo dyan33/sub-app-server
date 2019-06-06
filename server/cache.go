@@ -6,19 +6,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sub-app-server/config"
 	"sync"
+	"time"
 )
 
 type Cache struct {
-	Url         string `json:"url"`
-	Hash        string `json:"hash"`
-	ContentType string `json:"content_type"`
-	Path        string `json:"path"`
+	Url         string    `json:"url"`
+	Hash        string    `json:"hash"`
+	ContentType string    `json:"content_type"`
+	Path        string    `json:"path"`
+	Expire      time.Time `json:"expire"`
 
 	body []byte `json:"-"`
 }
@@ -46,7 +49,7 @@ func (c *CacheStore) store(cache *Cache) {
 		_ = ioutil.WriteFile(cache.Path, cache.body, 0666)
 
 		//缓存对象
-		_ = ioutil.WriteFile(config.C.CacheDir+"/cache.json", data, 0666)
+		_ = ioutil.WriteFile(config.C.Cache.Dir+"/meta.json", data, 0666)
 	}
 }
 
@@ -69,7 +72,7 @@ func init() {
 		Data: map[string]*Cache{},
 	}
 
-	if data, err := ioutil.ReadFile(config.C.CacheDir + "/cache.json"); err == nil {
+	if data, err := ioutil.ReadFile(config.C.Cache.Dir + "/meta.json"); err == nil {
 		_ = json.Unmarshal(data, &store)
 	}
 
@@ -97,11 +100,18 @@ func cacheResponse(req *http.Request, resp HttpResponse) bool {
 		url := req.URL.String()
 		urlHash := hash(url)
 
+		duration, err := time.ParseDuration(config.C.Cache.Expire)
+
+		if err != nil {
+			log.Println("parse cache expire failure !", config.C.Cache.Expire)
+		}
+
 		cache := &Cache{
 			Url:         url,
 			Hash:        urlHash,
 			ContentType: typ,
-			Path:        fmt.Sprintf(`%s/%s/%s`, config.C.CacheDir, req.Host, urlHash),
+			Path:        fmt.Sprintf(`%s/%s/%s`, config.C.Cache.Dir, req.Host, urlHash),
+			Expire:      time.Now().Add(duration),
 			body:        resp.Body,
 		}
 
@@ -133,15 +143,18 @@ func loadCache(req *http.Request) *http.Response {
 
 	if cache != nil {
 
-		if data, err := ioutil.ReadFile(cache.Path); err == nil {
-			resp := HttpResponse{
-				Headers: map[string][]string{
-					"Content-Type": {cache.ContentType},
-				},
-				Code: 200,
-				Body: data,
+		if time.Now().Before(cache.Expire) {
+
+			if data, err := ioutil.ReadFile(cache.Path); err == nil {
+				resp := HttpResponse{
+					Headers: map[string][]string{
+						"Content-Type": {cache.ContentType},
+					},
+					Code: 200,
+					Body: data,
+				}
+				return makeResponse(req, resp)
 			}
-			return makeResponse(req, resp)
 		}
 	}
 	return nil
