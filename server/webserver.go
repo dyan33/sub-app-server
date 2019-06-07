@@ -15,6 +15,8 @@ var upgrader = websocket.Upgrader{
 	HandshakeTimeout: time.Duration(time.Second * 5),
 }
 
+var ConnChan = make(chan *Channel)
+
 /*
 客户端连接到服务端
 */
@@ -27,7 +29,7 @@ func wsHandler(c *gin.Context) {
 		return
 	}
 
-	SocketChan <- conn
+	ConnChan <- NewChannel(conn)
 
 }
 
@@ -46,7 +48,7 @@ func WebServer(port string) {
 		c.HTML(200, "index.html", nil)
 	})
 
-	log.Println("start WebServer", port)
+	log.Println("WebServer running", port)
 
 	if err := r.Run(port); err != nil {
 		log.Println(err)

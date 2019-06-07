@@ -141,7 +141,7 @@ func (a *AppProxy) handle(message []byte, close func()) {
 		break
 
 	default:
-		log.Println(a.port, "not handle data!", string(message))
+		log.Println(a.port, "can't handle data!", string(message))
 
 		//不能处理的任务关闭连接
 		close()
@@ -156,16 +156,20 @@ func (a *AppProxy) run() {
 		for {
 			select {
 
-			case conn := <-SocketChan:
+			case ch := <-ConnChan:
+
+				log.Println(a.port, "start proxy channel!")
 
 				a.sms = make(chan string)
 				a.id.set(0)
 
-				NewChannel(conn, a.send, a.handle).Run()
+				ch.Run(a.port, a.send, a.handle)
 
 				close(a.sms)
 
 				a.clean()
+
+				log.Println(a.port, "stop proxy channel!")
 
 			//释放请求
 			case _ = <-a.send:
@@ -176,7 +180,7 @@ func (a *AppProxy) run() {
 
 	}()
 
-	log.Println("start ProxyServer", a.port)
+	log.Println("ProxyServer running", a.port)
 	if err := http.ListenAndServe(a.port, a.proxy); err != nil {
 		log.Println(err)
 	}

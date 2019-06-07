@@ -64,13 +64,11 @@ func (c *CacheStore) load(key string) *Cache {
 	return nil
 }
 
-var store CacheStore
+var store = CacheStore{
+	Data: map[string]*Cache{},
+}
 
 func init() {
-
-	store = CacheStore{
-		Data: map[string]*Cache{},
-	}
 
 	if data, err := ioutil.ReadFile(config.C.Cache.Dir + "/meta.json"); err == nil {
 		_ = json.Unmarshal(data, &store)
