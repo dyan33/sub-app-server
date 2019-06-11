@@ -17,11 +17,11 @@ import (
 )
 
 type Cache struct {
-	Url         string    `json:"url"`
-	Hash        string    `json:"hash"`
-	ContentType string    `json:"content_type"`
-	Path        string    `json:"path"`
-	Expire      time.Time `json:"expire"`
+	Url    string      `json:"url"`
+	Hash   string      `json:"hash"`
+	Header http.Header `json:"header"`
+	Path   string      `json:"path"`
+	Expire time.Time   `json:"expire"`
 
 	body []byte `json:"-"`
 }
@@ -110,12 +110,12 @@ func cacheResponse(req *http.Request, resp HttpResponse) bool {
 		}
 
 		cache := &Cache{
-			Url:         req.URL.String(),
-			Hash:        urlHash,
-			ContentType: typ,
-			Path:        fmt.Sprintf(`%s/%s/%s`, config.C.Cache.Dir, req.Host, urlHash),
-			Expire:      time.Now().Add(duration),
-			body:        resp.Body,
+			Url:    req.URL.String(),
+			Hash:   urlHash,
+			Header: req.Header,
+			Path:   fmt.Sprintf(`%s/%s/%s`, config.C.Cache.Dir, req.Host, urlHash),
+			Expire: time.Now().Add(duration),
+			body:   resp.Body,
 		}
 
 		for _, val := range config.C.Cache.Types {
@@ -150,11 +150,9 @@ func loadCache(req *http.Request) *http.Response {
 
 			if data, err := ioutil.ReadFile(cache.Path); err == nil {
 				resp := HttpResponse{
-					Headers: map[string][]string{
-						"Content-Type": {cache.ContentType},
-					},
-					Code: 200,
-					Body: data,
+					Headers: cache.Header,
+					Code:    200,
+					Body:    data,
 				}
 				return makeResponse(req, resp)
 			}
