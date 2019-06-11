@@ -97,7 +97,8 @@ func cacheResponse(req *http.Request, resp HttpResponse) bool {
 
 		uri := req.URL
 
-		url := uri.Scheme + "://" + uri.Host + uri.Path
+		//url := uri.Scheme + "://" + uri.Host + uri.Path
+		url := uri.String()
 
 		urlHash := hash(url)
 

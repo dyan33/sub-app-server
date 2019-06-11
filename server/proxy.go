@@ -121,6 +121,9 @@ func (a *AppProxy) doWork(data string) {
 
 func (a *AppProxy) handle(message []byte, close func()) {
 
+	//防止a.sms没有消耗 关闭chan崩溃
+	defer func() { _ = recover() }()
+
 	typ := gjson.GetBytes(message, "type").String()
 	data := gjson.GetBytes(message, "data").String()
 
