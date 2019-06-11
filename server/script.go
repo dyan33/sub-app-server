@@ -36,26 +36,29 @@ func (s *BrowerScript) Run() (string, error) {
 
 	script := config.S.Get(s.app.OperatorCode)
 
-	exe := script.Exe
-	//脚本名字
-	name := script.Name
+	if script != nil {
+		exe := script.Exe
+		//脚本名字
+		name := script.Name
 
-	//语言
-	lang := s.app.Lang
+		//语言
+		lang := s.app.Lang
 
-	//时区
-	timezone := s.app.TimeZone
+		//时区
+		timezone := s.app.TimeZone
 
-	//代理
-	proxy := s.proxy
+		//代理
+		proxy := s.proxy
 
-	//设备id
-	android := s.app.AndroidId
+		//设备id
+		android := s.app.AndroidId
 
-	command := exec.Command(exe, name, lang, timezone, proxy, android)
-	command.Dir = script.Dir
+		command := exec.Command(exe, name, lang, timezone, proxy, android)
+		command.Dir = script.Dir
 
-	out, err := command.CombinedOutput()
+		out, err := command.CombinedOutput()
 
-	return string(out), err
+		return string(out), err
+	}
+	return "not found script: " + s.app.OperatorCode, nil
 }
