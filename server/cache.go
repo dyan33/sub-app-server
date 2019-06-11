@@ -82,6 +82,18 @@ func hash(text string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
+func contentType(header http.Header) string {
+	var typ string
+
+	if len(header["content-type"]) > 0 {
+		typ = header["content-type"][0]
+	} else if len(header["Content-Type"]) > 0 {
+		typ = header["Content-Type"][0]
+	}
+
+	return typ
+}
+
 func cacheResponse(req *http.Request, resp HttpResponse) bool {
 
 	if resp.Body != nil {
@@ -91,14 +103,6 @@ func cacheResponse(req *http.Request, resp HttpResponse) bool {
 			if strings.HasPrefix(req.URL.String(), url) {
 				return false
 			}
-		}
-
-		var typ string
-
-		if len(resp.Headers["content-type"]) > 0 {
-			typ = resp.Headers["content-type"][0]
-		} else if len(resp.Headers["Content-Type"]) > 0 {
-			typ = resp.Headers["Content-Type"][0]
 		}
 
 		uri := req.URL
@@ -124,6 +128,9 @@ func cacheResponse(req *http.Request, resp HttpResponse) bool {
 			body:   resp.Body,
 		}
 
+		//根据content type缓存
+		typ := contentType(resp.Headers)
+
 		for _, val := range config.C.Cache.Types {
 
 			if strings.HasPrefix(typ, val) {
@@ -132,8 +139,9 @@ func cacheResponse(req *http.Request, resp HttpResponse) bool {
 			}
 		}
 
+		//根据url缓存
 		for _, val := range config.C.Cache.Urls {
-			if url == val {
+			if strings.HasPrefix(url, val) {
 				store.store(cache)
 				return true
 			}

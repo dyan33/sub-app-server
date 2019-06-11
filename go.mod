@@ -9,3 +9,12 @@ require (
 	gopkg.in/elazarl/goproxy.v1 v1.0.0-20180725130230-947c36da3153
 	gopkg.in/yaml.v2 v2.2.2
 )
+
+replace (
+	golang.org/x/crypto => ../../go/src/golang.org/x/crypto
+	golang.org/x/net => ../../go/src/golang.org/x/net
+	golang.org/x/sync => ../../go/src/golang.org/x/sync
+	golang.org/x/sys => ../../go/src/golang.org/x/sys
+	golang.org/x/text => ../../go/src/golang.org/x/text
+	golang.org/x/tools => ../../go/src/golang.org/x/tools
+)

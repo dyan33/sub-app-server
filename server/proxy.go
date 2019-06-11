@@ -163,7 +163,7 @@ func (a *AppProxy) run() {
 
 				log.Println(a.port, "start proxy channel!")
 
-				a.sms = make(chan string)
+				a.sms = make(chan string, 100)
 				a.id.set(0)
 
 				ch.Run(a.port, a.send, a.handle)
