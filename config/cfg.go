@@ -14,6 +14,7 @@ type Cache struct {
 	Expire string   `json:"expire"`
 	Types  []string `json:"types"`
 	Urls   []string `json:"urls"`
+	Ignore []string `json:"ignore"`
 }
 
 type Config struct {

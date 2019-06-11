@@ -5,7 +5,11 @@ server: [8010]
 proxy: [8020]
 
 #过滤链接
-igonre: ["www.google.es","accounts.google.com","www.gstatic.com","clients1.google.com"]
+igonre:
+  - "www.google.es"
+  - "accounts.google.com"
+  - "www.gstatic.com"
+  - "clients1.google.com"
 
 #缓存
 cache:
@@ -15,6 +19,9 @@ cache:
 
   #过期时间
   expire: "12h"
+
+  #过滤缓存
+  ignore:
 
   #缓存MIME
   types:

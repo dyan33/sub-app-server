@@ -44,7 +44,6 @@ func (c *CacheStore) store(cache *Cache) {
 		if _, err := os.Stat(dirname); os.IsNotExist(err) {
 			_ = os.MkdirAll(dirname, os.ModePerm)
 		}
-
 		//缓存文件
 		_ = ioutil.WriteFile(cache.Path, cache.body, 0666)
 
@@ -86,6 +85,13 @@ func hash(text string) string {
 func cacheResponse(req *http.Request, resp HttpResponse) bool {
 
 	if resp.Body != nil {
+
+		//跳过缓存
+		for _, url := range config.C.Cache.Ignore {
+			if strings.HasPrefix(req.URL.String(), url) {
+				return false
+			}
+		}
 
 		var typ string
 
