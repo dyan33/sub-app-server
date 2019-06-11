@@ -95,17 +95,21 @@ func cacheResponse(req *http.Request, resp HttpResponse) bool {
 			typ = resp.Headers["Content-Type"][0]
 		}
 
-		url := req.URL.String()
+		uri := req.URL
+
+		url := uri.Scheme + "://" + uri.Host + uri.Path
+
 		urlHash := hash(url)
 
 		duration, err := time.ParseDuration(config.C.Cache.Expire)
 
 		if err != nil {
 			log.Println("parse cache expire failure !", config.C.Cache.Expire)
+			return false
 		}
 
 		cache := &Cache{
-			Url:         url,
+			Url:         req.URL.String(),
 			Hash:        urlHash,
 			ContentType: typ,
 			Path:        fmt.Sprintf(`%s/%s/%s`, config.C.Cache.Dir, req.Host, urlHash),

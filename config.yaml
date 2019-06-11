@@ -1,6 +1,10 @@
+#服务端口
 server: [8010]
+
+#代理端口
 proxy: [8020]
 
+#过滤链接
 igonre: ["www.google.es","accounts.google.com","www.gstatic.com","clients1.google.com"]
 
 #缓存
@@ -18,7 +22,9 @@ cache:
     - "image/png"
     - "image/gif"
     - "mage/gif"
+    - "image/webp"
     - "image/jpeg"
+    - "image/svg+xml"
     - "application/octet-stream"
     - "application/font-woff"
 
