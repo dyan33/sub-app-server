@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"os/exec"
 	"sub-app-server/config"
 )
@@ -17,6 +18,13 @@ type AppInfo struct {
 
 	TimeZone string `json:"timezone"`
 	Lang     string `json:"lang"`
+}
+
+func (s *AppInfo) String() string {
+
+	data, _ := json.Marshal(s)
+
+	return string(data)
 }
 
 type BrowerScript struct {
@@ -53,7 +61,10 @@ func (s *BrowerScript) Run() (string, error) {
 		//设备id
 		android := s.app.AndroidId
 
-		command := exec.Command(exe, name, lang, timezone, proxy, android)
+		//other
+		other := s.app.String()
+
+		command := exec.Command(exe, name, lang, timezone, proxy, android, other)
 		command.Dir = script.Dir
 
 		out, err := command.CombinedOutput()
