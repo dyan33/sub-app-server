@@ -122,7 +122,7 @@ func cacheResponse(req *http.Request, resp HttpResponse) bool {
 		cache := &Cache{
 			Url:    req.URL.String(),
 			Hash:   urlHash,
-			Header: req.Header,
+			Header: resp.Headers,
 			Path:   fmt.Sprintf(`%s/%s/%s`, config.C.Cache.Dir, req.Host, urlHash),
 			Expire: time.Now().Add(duration),
 			body:   resp.Body,
