@@ -2,9 +2,11 @@ package config
 
 import (
 	"gopkg.in/yaml.v2"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"sync"
 )
 
 var C *Config
@@ -25,9 +27,22 @@ type Config struct {
 	Cache Cache `yaml:"cache"`
 }
 
+type LogWriter struct {
+	m       *sync.Mutex
+	logname string
+	logfile io.Writer
+}
+
 func init() {
 
-	log.SetOutput(os.Stdout)
+	logFile, err := os.OpenFile("log.txt", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	if err != nil {
+		panic(err)
+	}
+
+	mw := io.MultiWriter(os.Stdout, logFile)
+
+	log.SetOutput(mw)
 
 	C = &Config{}
 
