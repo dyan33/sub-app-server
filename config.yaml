@@ -2,14 +2,15 @@
 server: [8010]
 
 #代理端口
-proxy: [8020]
+proxy: [8020,8021,8022,8023,8024,8025,8026,8027,8028,8029]
 
 #过滤链接
-igonre:
+igonre: 
   - "www.google.es"
   - "accounts.google.com"
   - "www.gstatic.com"
   - "clients1.google.com"
+  - "chrome-devtools-frontend.appspot.com"
 
 #缓存
 cache:
@@ -18,10 +19,7 @@ cache:
   dir: ".cache"
 
   #过期时间
-  expire: "12h"
-
-  #过滤缓存
-  ignore:
+  expire: "10000h"
 
   #缓存MIME
   types:
@@ -34,6 +32,11 @@ cache:
     - "image/svg+xml"
     - "application/octet-stream"
     - "application/font-woff"
+    - "application/javascript"
+    - "application/x-javascript"
+    - "text/javascript"
+    - "font/woff"
+    - "image/x-icon"
 
   #缓存URL
   urls:

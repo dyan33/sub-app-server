@@ -52,7 +52,10 @@ fabric.properties
 
 # Editor-based Rest Client
 .idea/httpRequests
-
-
+.vscode
+ca.*
 go.sum
 .cache
+sub-app-server.exe
+sub-app-server.exe~
+log.txt
