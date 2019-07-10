@@ -14,8 +14,8 @@ scripts:
 
   #测试
   "test":
-    exe: "C:/Program Files/nodejs/node.exe"
-    dir: "C:/Users/CPX/test/sub-app-scripts"
+    exe: "/usr/local/bin/node"
+    dir: "/Users/dengchenggang/VScodeProjects/sub-app-scripts"
     name: "test.js"
 
   #泰国AIS
